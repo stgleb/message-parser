@@ -35,7 +35,7 @@ func NewMessage(mentions, links, emotions [][]byte) Message {
 
 func (message *Message) String() string {
 	messageMarshaled, err := json.Marshal(*message)
-	Info.Printf("%s", message.Links)
+	Debug.Printf("%s", message.Links)
 
 	if err != nil {
 		Error.Printf("Error during marshalling message")

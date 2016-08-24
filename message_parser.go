@@ -2,6 +2,7 @@ package message_parser
 
 import (
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
@@ -18,6 +19,7 @@ type MessageParserImpl struct {
 }
 
 var (
+	Debug *log.Logger
 	Info  *log.Logger
 	Error *log.Logger
 )
@@ -26,6 +28,10 @@ func InitLoggers(debugHandle io.Writer,
 	infoHandle io.Writer,
 	warningHandle io.Writer,
 	errorHandle io.Writer) {
+
+	Debug = log.New(debugHandle,
+		"DEBUG: ",
+		log.Ldate|log.Ltime|log.Lshortfile)
 
 	Info = log.New(infoHandle,
 		"INFO: ",
@@ -37,11 +43,11 @@ func InitLoggers(debugHandle io.Writer,
 }
 
 func init() {
-	InitLoggers(os.Stdout, os.Stdout, os.Stdout, os.Stderr)
+	InitLoggers(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 }
 
 func NewMessageParser(mentionPattern, linkPattern, emotions string) MessageParserImpl {
-	Info.Printf("Create new MessageParser")
+	Debug.Printf("Create new MessageParser")
 	mentionRe, err := regexp.CompilePOSIX(mentionPattern)
 
 	if err != nil {
@@ -89,16 +95,16 @@ func findAllParallel(re regexp.Regexp, message []byte, resultChan chan<- [][]byt
 }
 
 func (messageParser *MessageParserImpl) Parse(messageRaw string) string {
-	Info.Printf("Start parsing message %s", messageRaw)
+	Debug.Printf("Start parsing message %s", messageRaw)
 	messageSlice := StringToByteSlice(messageRaw)
-	Info.Printf("Convert string to byte slice")
+	Debug.Printf("Convert string to byte slice")
 
 	mentions := findAll(messageParser.mentionRegexp, messageSlice)
-	Info.Printf("Found %d mentions", len(mentions))
+	Debug.Printf("Found %d mentions", len(mentions))
 	links := findAll(messageParser.linkRegexp, messageSlice)
-	Info.Printf("Found %d links", len(links))
+	Debug.Printf("Found %d links", len(links))
 	emotions := findAll(messageParser.emotionsRegexp, messageSlice)
-	Info.Printf("Found %d emotions", len(emotions))
+	Debug.Printf("Found %d emotions", len(emotions))
 
 	// Create new Message object
 	message := NewMessage(mentions, links, emotions)
@@ -111,9 +117,9 @@ func (messageParser *MessageParserImpl) ParseParallel(messageRaw string) string 
 	var links [][]byte
 	var emotions [][]byte
 
-	Info.Printf("Start parsing message %s", messageRaw)
+	Debug.Printf("Start parsing message %s", messageRaw)
 	messageSlice := StringToByteSlice(messageRaw)
-	Info.Printf("Convert string to byte slice")
+	Debug.Printf("Convert string to byte slice")
 
 	mentionsChan := make(chan [][]byte)
 	emotionsChan := make(chan [][]byte)
@@ -134,11 +140,11 @@ func (messageParser *MessageParserImpl) ParseParallel(messageRaw string) string 
 	for i := 0; i < 3; i += 1 {
 		select {
 		case mentions = <-mentionsChan:
-			Info.Printf("Found %d mentions", len(mentions))
+			Debug.Printf("Found %d mentions", len(mentions))
 		case links = <-linksChan:
-			Info.Printf("Found %d links", len(links))
+			Debug.Printf("Found %d links", len(links))
 		case emotions = <-emotionsChan:
-			Info.Printf("Found %d emotions", len(emotions))
+			Debug.Printf("Found %d emotions", len(emotions))
 		}
 	}
 
