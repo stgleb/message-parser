@@ -1,50 +1,39 @@
 package message_parser
 
 import (
-	"regexp"
-	"log"
 	"io"
+	"log"
 	"os"
+	"regexp"
 )
-
 
 type MessageParser interface {
 	parse(string) string
 }
 
 type MessageParserImpl struct {
-	mentionRegexp regexp.Regexp
-	linkRegexp    regexp.Regexp
-	emotionsRegexp    regexp.Regexp
+	mentionRegexp  regexp.Regexp
+	linkRegexp     regexp.Regexp
+	emotionsRegexp regexp.Regexp
 }
 
 var (
-	Debug   *log.Logger
 	Info    *log.Logger
-	Warning *log.Logger
 	Error   *log.Logger
 )
 
 func InitLoggers(debugHandle io.Writer,
-		infoHandle io.Writer,
-		warningHandle io.Writer,
-		errorHandle io.Writer) {
-
-	Debug = log.New(debugHandle,
-		"DEBUG: ",
-		log.Ldate | log.Ltime | log.Lshortfile)
+	infoHandle io.Writer,
+	warningHandle io.Writer,
+	errorHandle io.Writer) {
 
 	Info = log.New(infoHandle,
 		"INFO: ",
-		log.Ldate | log.Ltime | log.Lshortfile)
-
-	Warning = log.New(warningHandle,
-		"WARNING: ",
-		log.Ldate | log.Ltime | log.Lshortfile)
+		log.Ldate|log.Ltime|log.Lshortfile)
 
 	Error = log.New(errorHandle,
 		"ERROR: ",
-		log.Ldate | log.Ltime | log.Lshortfile)
+		log.Ldate|log.Ltime|log.Lshortfile)
 }
 
 func init() {
@@ -53,10 +42,10 @@ func init() {
 
 func NewMessageParser(mentionPattern, linkPattern, emotions string) MessageParserImpl {
 	Info.Printf("Create new MessageParser")
-	mentionRe, err := regexp.Compile(mentionPattern)
+	mentionRe, err := regexp.CompilePOSIX(mentionPattern)
 
 	if err != nil {
-		Error.Printf("Error %s during compiling metions regexp %s",
+		Error.Fatalf("Error %s during compiling metions regexp %s",
 			err.Error(),
 			mentionPattern)
 	}
@@ -64,7 +53,7 @@ func NewMessageParser(mentionPattern, linkPattern, emotions string) MessageParse
 	linkRe, err2 := regexp.Compile(linkPattern)
 
 	if err2 != nil {
-		Error.Printf("Error %s during compiling link regexp %s",
+		Error.Fatalf("Error %s during compiling link regexp %s",
 			err2.Error(),
 			linkPattern)
 	}
@@ -72,23 +61,22 @@ func NewMessageParser(mentionPattern, linkPattern, emotions string) MessageParse
 	emotionsRe, err3 := regexp.Compile(emotions)
 
 	if err3 != nil {
-		Error.Printf("Error %s during compiling emotions regexp %s",
+		Error.Fatalf("Error %s during compiling emotions regexp %s",
 			err2.Error(),
 			linkPattern)
 	}
 
 	return MessageParserImpl{
-		mentionRegexp: *mentionRe,
-		linkRegexp: *linkRe,
+		mentionRegexp:  *mentionRe,
+		linkRegexp:     *linkRe,
 		emotionsRegexp: *emotionsRe,
 	}
 }
 
-// TODO: consider possibility to change Find by FindAll
 func findAll(re regexp.Regexp, message []byte) [][]byte {
 	// Use FindAll from regexp package, argument n int
 	// might be upper bound of entries to return.
-	result := re.FindAll(message, 1 << 32)
+	result := re.FindAll(message, 1<<32)
 
 	return result
 }
@@ -110,4 +98,3 @@ func (messageParser *MessageParserImpl) Parse(messageRaw string) string {
 
 	return message.String()
 }
-

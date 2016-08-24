@@ -2,40 +2,40 @@ package message_parser
 
 import "encoding/json"
 
-
 type Message struct {
-	mentions []string `json:"mentions"`
-	links []string `json:"links"`
-	emotions []string `json:"emotions"`
+	Mentions []string `json:"mentions"`
+	Links    []string `json:"links"`
+	Emotions []string `json:"emotions"`
 }
 
 func NewMessage(mentions, links, emotions [][]byte) Message {
 	// Preallocate buffers for data.
-	m := make([]string, len(mentions))
-	l := make([]string, len(links))
-	e := make([]string, len(emotions))
+	m := make([]string, 0, len(mentions))
+	l := make([]string, 0, len(links))
+	e := make([]string, 0, len(emotions))
 
-	for _, mention := range mentions {
-		m = append(m, BytesToString(mention))
+	for index, _ := range mentions {
+		m = append(m, BytesToString(mentions[index]))
 	}
 
-	for _, emotion := range emotions {
-		e = append(m, BytesToString(emotion))
+	for index, _ := range emotions {
+		e = append(e, BytesToString(emotions[index]))
 	}
 
-	for _, link := range links {
-		l = append(m, BytesToString(link))
+	for index, _ := range links {
+		l = append(l, BytesToString(links[index]))
 	}
 
 	return Message{
-		mentions: m,
-		emotions: e,
-		links: l,
+		Mentions: m,
+		Emotions: e,
+		Links:    l,
 	}
 }
 
 func (message *Message) String() string {
-	messageMarshaled, err := json.Marshal(message)
+	messageMarshaled, err := json.Marshal(*message)
+	Info.Printf("%s", message.Links)
 
 	if err != nil {
 		Error.Printf("Error during marshalling message")
@@ -43,4 +43,3 @@ func (message *Message) String() string {
 
 	return BytesToString(messageMarshaled)
 }
-
