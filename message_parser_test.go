@@ -25,6 +25,7 @@ func TestMessageParseParallel(t *testing.T) {
 
 func BenchmarkMessageParse(b *testing.B) {
 	messageParser := NewMessageParser(MENTION_PATTERN, LINK_PATTERN, EMOTIONS_PATTERN)
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		messageParser.Parse("Hello  @Mike @John @Peter (bicepleft) (badass) hello, http://google.com https://golang.org")
@@ -33,6 +34,7 @@ func BenchmarkMessageParse(b *testing.B) {
 
 func BenchmarkMessageParseParallel(b *testing.B) {
 	messageParser := NewMessageParser(MENTION_PATTERN, LINK_PATTERN, EMOTIONS_PATTERN)
+	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		messageParser.ParseParallel("Hello  @Mike @John @Peter (bicepleft) (badass) hello, http://google.com https://golang.org")

@@ -133,11 +133,11 @@ func (messageParser *MessageParserImpl) ParseParallel(messageRaw string) string 
 	// Collect results from all parsing goroutines
 	for i := 0; i < 3; i += 1 {
 		select {
-		case mentions := <-mentionsChan:
+		case mentions = <-mentionsChan:
 			Info.Printf("Found %d mentions", len(mentions))
-		case links := <-linksChan:
+		case links = <-linksChan:
 			Info.Printf("Found %d links", len(links))
-		case emotions := <-emotionsChan:
+		case emotions = <-emotionsChan:
 			Info.Printf("Found %d emotions", len(emotions))
 		}
 	}
