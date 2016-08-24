@@ -9,7 +9,8 @@ import (
 )
 
 type MessageParser interface {
-	parse(string) string
+	Parse(messageRaw string) string
+	ParseParallel(messageRaw string) string
 }
 
 type MessageParserImpl struct {
