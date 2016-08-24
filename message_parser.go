@@ -81,6 +81,13 @@ func findAll(re regexp.Regexp, message []byte) [][]byte {
 	return result
 }
 
+func findAllParallel(re regexp.Regexp, message []byte, resultChan chan<- [][]byte) {
+	// Use FindAll from regexp package, argument n int
+	// might be upper bound of entries to return.
+	result := re.FindAll(message, 1<<32)
+	resultChan <- result
+}
+
 func (messageParser *MessageParserImpl) Parse(messageRaw string) string {
 	Info.Printf("Start parsing message %s", messageRaw)
 	messageSlice := StringToByteSlice(messageRaw)
@@ -100,16 +107,40 @@ func (messageParser *MessageParserImpl) Parse(messageRaw string) string {
 }
 
 func (messageParser *MessageParserImpl) ParseParallel(messageRaw string) string {
+	var mentions [][]byte
+	var links [][]byte
+	var emotions [][]byte
+
 	Info.Printf("Start parsing message %s", messageRaw)
 	messageSlice := StringToByteSlice(messageRaw)
 	Info.Printf("Convert string to byte slice")
 
-	mentions := findAll(messageParser.mentionRegexp, messageSlice)
-	Info.Printf("Found %d mentions", len(mentions))
-	links := findAll(messageParser.linkRegexp, messageSlice)
-	Info.Printf("Found %d links", len(links))
-	emotions := findAll(messageParser.emotionsRegexp, messageSlice)
-	Info.Printf("Found %d emotions", len(emotions))
+	mentionsChan := make(chan [][]byte)
+	emotionsChan := make(chan [][]byte)
+	linksChan := make(chan [][]byte)
+
+	// Pass channels for results to parsing goroutinges
+	go findAllParallel(messageParser.mentionRegexp,
+		messageSlice,
+		mentionsChan)
+	go findAllParallel(messageParser.linkRegexp,
+		messageSlice,
+		linksChan)
+	go findAllParallel(messageParser.emotionsRegexp,
+		messageSlice,
+		emotionsChan)
+
+	// Collect results from all parsing goroutines
+	for i := 0; i < 3; i += 1 {
+		select {
+		case mentions := <-mentionsChan:
+			Info.Printf("Found %d mentions", len(mentions))
+		case links := <-linksChan:
+			Info.Printf("Found %d links", len(links))
+		case emotions := <-emotionsChan:
+			Info.Printf("Found %d emotions", len(emotions))
+		}
+	}
 
 	// Create new Message object
 	message := NewMessage(mentions, links, emotions)
