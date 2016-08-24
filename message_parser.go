@@ -18,8 +18,8 @@ type MessageParserImpl struct {
 }
 
 var (
-	Info    *log.Logger
-	Error   *log.Logger
+	Info  *log.Logger
+	Error *log.Logger
 )
 
 func InitLoggers(debugHandle io.Writer,
@@ -82,6 +82,24 @@ func findAll(re regexp.Regexp, message []byte) [][]byte {
 }
 
 func (messageParser *MessageParserImpl) Parse(messageRaw string) string {
+	Info.Printf("Start parsing message %s", messageRaw)
+	messageSlice := StringToByteSlice(messageRaw)
+	Info.Printf("Convert string to byte slice")
+
+	mentions := findAll(messageParser.mentionRegexp, messageSlice)
+	Info.Printf("Found %d mentions", len(mentions))
+	links := findAll(messageParser.linkRegexp, messageSlice)
+	Info.Printf("Found %d links", len(links))
+	emotions := findAll(messageParser.emotionsRegexp, messageSlice)
+	Info.Printf("Found %d emotions", len(emotions))
+
+	// Create new Message object
+	message := NewMessage(mentions, links, emotions)
+
+	return message.String()
+}
+
+func (messageParser *MessageParserImpl) ParseParallel(messageRaw string) string {
 	Info.Printf("Start parsing message %s", messageRaw)
 	messageSlice := StringToByteSlice(messageRaw)
 	Info.Printf("Convert string to byte slice")
